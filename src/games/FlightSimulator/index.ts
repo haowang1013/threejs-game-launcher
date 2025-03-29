@@ -51,15 +51,37 @@ export class FlightSimulator implements Game {
     
     // Create terrain
     const terrainGeometry = new THREE.PlaneGeometry(500, 500, 50, 50);
-    // Remove this duplicate declaration:
-    // const terrainMaterial = new THREE.MeshBasicMaterial({
-    //   color: 0x228B22, // Forest green
-    //   wireframe: false,
-    //   side: THREE.DoubleSide
-    // });
+    
+    if (1) {
+      // Apply Perlin noise to terrain vertices
+      const positionAttribute = terrainGeometry.getAttribute('position');
+      const vertex = new THREE.Vector3();
+          
+      for (let i = 0; i < positionAttribute.count; i++) {
+        vertex.fromBufferAttribute(positionAttribute, i);
+        console.log(vertex)
+        
+        // Simple Perlin-like noise function (using multiple frequencies)
+        // Reduced amplitude to make terrain less extreme
+        const noise1 = Math.sin(vertex.x * 0.05) * Math.cos(vertex.y * 0.05) * 2;
+        const noise2 = Math.sin(vertex.x * 0.1) * Math.cos(vertex.y * 0.1) * 1;
+        const noise3 = Math.sin(vertex.x * 0.2) * Math.cos(vertex.y * 0.2) * 0.5;
+        
+        // Update the y-coordinate with the noise value
+        vertex.z += (noise1 + noise2 + noise3) * 5;
+        
+        // Write the updated position back to the attribute
+        positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+      }
+      
+      positionAttribute.needsUpdate = true;
+      terrainGeometry.computeVertexNormals(); // Important for proper lighting
+    }    
     
     // Keep only the MeshStandardMaterial version
     this.terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+    
+    // Adjust terrain position and rotation
     this.terrain.rotation.x = Math.PI / 2;
     this.terrain.position.y = -30;
     this.scene.add(this.terrain);
