@@ -12,6 +12,7 @@ export class FlightSimulator implements Game {
   private yaw = 0;
   private roll = 0;
   private keyState: { [key: string]: boolean } = {};
+  private instructionsEl: HTMLDivElement | null = null;
   
   constructor(private scene: THREE.Scene, private camera: THREE.Camera) {}
   
@@ -292,6 +293,38 @@ export class FlightSimulator implements Game {
       this.skybox.geometry.dispose();
       (this.skybox.material as THREE.Material).dispose();
       this.skybox = null;
+    }
+  }
+
+  showUI(): void {
+    this.instructionsEl = document.createElement('div');
+    this.instructionsEl.id = 'flight-instructions';
+    this.instructionsEl.style.position = 'absolute';
+    this.instructionsEl.style.bottom = '10px';
+    this.instructionsEl.style.right = '10px';
+    this.instructionsEl.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    this.instructionsEl.style.color = 'white';
+    this.instructionsEl.style.padding = '10px';
+    this.instructionsEl.style.borderRadius = '5px';
+    this.instructionsEl.style.maxWidth = '300px';
+    
+    this.instructionsEl.innerHTML = `
+      <h3>Flight Controls:</h3>
+      <ul>
+        <li>↑/↓: Pitch (nose up/down)</li>
+        <li>←/→: Roll (tilt left/right)</li>
+        <li>A/D: Yaw (turn left/right)</li>
+        <li>W/S: Increase/decrease speed</li>
+      </ul>
+    `;
+    
+    document.body.appendChild(this.instructionsEl);
+  }
+
+  hideUI(): void {
+    if (this.instructionsEl) {
+      document.body.removeChild(this.instructionsEl);
+      this.instructionsEl = null;
     }
   }
 }

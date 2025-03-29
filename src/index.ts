@@ -90,60 +90,31 @@ class GameLauncher {
     });
     
     menuContainer.appendChild(homeButton);
+    
     document.body.appendChild(menuContainer);
   }
 
   private launchGame(index: number): void {
-    // Exit current game if one is running
     this.exitCurrentGame();
     
-    // Start the selected game
     this.currentGame = this.games[index];
     this.currentGame.init();
-    console.log(`Launched game: ${this.currentGame.getName()}`);
     
-    // Show instructions for Flight Simulator
-    if (this.currentGame instanceof FlightSimulator) {
-      this.showFlightInstructions();
+    // Show game-specific UI if implemented
+    if (this.currentGame.showUI) {
+      this.currentGame.showUI();
     }
-  }
-  
-  private showFlightInstructions(): void {
-    const instructionsEl = document.createElement('div');
-    instructionsEl.id = 'flight-instructions';
-    instructionsEl.style.position = 'absolute';
-    instructionsEl.style.bottom = '10px';
-    instructionsEl.style.right = '10px';
-    instructionsEl.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    instructionsEl.style.color = 'white';
-    instructionsEl.style.padding = '10px';
-    instructionsEl.style.borderRadius = '5px';
-    instructionsEl.style.maxWidth = '300px';
-    
-    instructionsEl.innerHTML = `
-      <h3>Flight Controls:</h3>
-      <ul>
-        <li>↑/↓: Pitch (nose up/down)</li>
-        <li>←/→: Roll (tilt left/right)</li>
-        <li>A/D: Yaw (turn left/right)</li>
-        <li>W/S: Increase/decrease speed</li>
-      </ul>
-    `;
-    
-    document.body.appendChild(instructionsEl);
   }
   
   private exitCurrentGame(): void {
     if (this.currentGame) {
+      // Hide game-specific UI if implemented
+      if (this.currentGame.hideUI) {
+        this.currentGame.hideUI();
+      }
+      
       this.currentGame.cleanup();
       this.currentGame = null;
-      console.log('Returned to launcher');
-      
-      // Remove flight instructions if they exist
-      const instructionsEl = document.getElementById('flight-instructions');
-      if (instructionsEl) {
-        document.body.removeChild(instructionsEl);
-      }
     }
   }
   
