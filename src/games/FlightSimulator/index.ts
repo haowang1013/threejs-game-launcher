@@ -30,29 +30,35 @@ export class FlightSimulator implements Game {
     
     // Create skybox
     const skyGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
-    const skyMaterial = new THREE.MeshBasicMaterial({
-      color: 0x87CEEB, // Sky blue
-      side: THREE.BackSide
+    // Update skybox material
+    const skyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x87CEEB,
+        side: THREE.BackSide,
+        metalness: 0.0,
+        roughness: 1.0
+    });
+    
+    // Update terrain material
+    const terrainMaterial = new THREE.MeshStandardMaterial({
+        color: 0x228B22,
+        wireframe: false,
+        side: THREE.DoubleSide,
+        metalness: 0.0,
+        roughness: 0.9
     });
     this.skybox = new THREE.Mesh(skyGeometry, skyMaterial);
     this.scene.add(this.skybox);
     
     // Create terrain
     const terrainGeometry = new THREE.PlaneGeometry(500, 500, 50, 50);
-    const terrainMaterial = new THREE.MeshBasicMaterial({
-      color: 0x228B22, // Forest green
-      wireframe: false,
-      side: THREE.DoubleSide
-    });
+    // Remove this duplicate declaration:
+    // const terrainMaterial = new THREE.MeshBasicMaterial({
+    //   color: 0x228B22, // Forest green
+    //   wireframe: false,
+    //   side: THREE.DoubleSide
+    // });
     
-    // Add some random height to terrain vertices
-    const vertices = terrainGeometry.attributes.position.array;
-    for (let i = 0; i < vertices.length; i += 3) {
-      if (i % 3 === 1) { // y-coordinate
-        (vertices as any)[i] = Math.random() * 10 - 20; // Random height between -20 and -10
-      }
-    }
-    
+    // Keep only the MeshStandardMaterial version
     this.terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
     this.terrain.rotation.x = Math.PI / 2;
     this.terrain.position.y = -30;
@@ -67,49 +73,82 @@ export class FlightSimulator implements Game {
     // Position camera
     this.camera.position.set(0, 3, -20);
     this.camera.lookAt(0, 0, -10);
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5); // soft white light
+    this.scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1).normalize();
+    this.scene.add(directionalLight);
+    
+    const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.5);
+    this.scene.add(hemisphereLight);
   }
   
   private createAirplane(): void {
     this.airplane = new THREE.Group();
     
+    // Material declarations (keep these at the top)
+    const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFF6347,
+        metalness: 0.5,
+        roughness: 0.7
+    });
+    
+    const wingMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4169E1,
+        metalness: 0.7,
+        roughness: 0.3
+    });
+    
+    const tailMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4169E1,
+        metalness: 0.7,
+        roughness: 0.3
+    });
+    
+    const vStabMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFF6347,
+        metalness: 0.5,
+        roughness: 0.7
+    });
+    
+    const propMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x333333,
+        metalness: 0.9,
+        roughness: 0.1
+    });
+    
     // Airplane body (fuselage)
     const bodyGeometry = new THREE.CylinderGeometry(0.5, 0.5, 4, 8);
-    const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6347 }); // Tomato red
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    body.rotation.x = Math.PI / 2; // Correctly rotated to point along Z-axis
+    body.rotation.x = Math.PI / 2;
     this.airplane.add(body);
     
     // Wings
     const wingGeometry = new THREE.BoxGeometry(5, 0.1, 1);
-    const wingMaterial = new THREE.MeshBasicMaterial({ color: 0x4169E1 }); // Royal blue
     const wings = new THREE.Mesh(wingGeometry, wingMaterial);
-    // Position needs to be adjusted for X-axis rotation
-    wings.position.set(0, 0, 0); // Center on the fuselage
+    wings.position.set(0, 0, 0);
     this.airplane.add(wings);
     
     // Tail
     const tailGeometry = new THREE.BoxGeometry(1, 0.1, 1);
-    const tailMaterial = new THREE.MeshBasicMaterial({ color: 0x4169E1 });
     const tail = new THREE.Mesh(tailGeometry, tailMaterial);
-    // Position needs to be adjusted for X-axis rotation
-    tail.position.set(0, 0, 1.5); // Move to back of fuselage
+    tail.position.set(0, 0, 1.5);
     this.airplane.add(tail);
     
     // Vertical stabilizer
     const vStabGeometry = new THREE.BoxGeometry(0.8, 1, 0.1);
-    const vStabMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6347 });
     const vStab = new THREE.Mesh(vStabGeometry, vStabMaterial);
-    // Position needs to be adjusted for X-axis rotation
-    vStab.position.set(0, 0.5, 1.5); // Above the tail
+    vStab.position.set(0, 0.5, 1.5);
     this.airplane.add(vStab);
     
     // Propeller
     const propGeometry = new THREE.BoxGeometry(0.1, 1.5, 0.1);
-    const propMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
     const propeller = new THREE.Mesh(propGeometry, propMaterial);
-    // Make propeller larger and ensure it's positioned correctly
-    propeller.position.set(0, 0, -2.1); // Slightly further forward
-    propeller.scale.set(2, 2, 2); // Make it larger
+    propeller.position.set(0, 0, -2.1);
+    propeller.scale.set(2, 2, 2);
     this.airplane.add(propeller);
     
     // Add airplane to scene
@@ -121,7 +160,13 @@ export class FlightSimulator implements Game {
   
   private createClouds(count: number): void {
     const cloudGeometry = new THREE.SphereGeometry(1, 7, 7);
-    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const cloudMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        metalness: 0.0,
+        roughness: 0.9,
+        transparent: true,
+        opacity: 0.8
+    });
     
     for (let i = 0; i < count; i++) {
       const cloud = new THREE.Group();
@@ -244,7 +289,7 @@ export class FlightSimulator implements Game {
       this.roll *= 0.99;
     }
     if (!this.keyState['a'] && !this.keyState['A'] && !this.keyState['d'] && !this.keyState['D']) {
-      this.yaw *= 0.99;
+      // this.yaw *= 0.99;
     }
   }
   
